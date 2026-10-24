@@ -1,0 +1,4 @@
+apps/mobile
+pnpm-lock.yaml
+**/dist
+**/.turbo

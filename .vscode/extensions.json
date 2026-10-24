@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "Dart-Code.flutter",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bierner.markdown-mermaid"
+  ]
+}
