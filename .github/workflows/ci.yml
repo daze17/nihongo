@@ -40,7 +40,7 @@ jobs:
       - name: Lint, typecheck, test
         run: pnpm turbo run lint typecheck test
 
-  backend-e2e:
+  backend-user-e2e:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -64,9 +64,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run test:e2e --filter=backend
+      - run: pnpm turbo run test:e2e --filter=backend-user
 
-  backend-docker:
+  backend-user-docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/backend/Dockerfile
+          file: apps/backend/user/Dockerfile
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max

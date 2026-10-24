@@ -11,6 +11,7 @@
     "build": "flutter build apk --debug",
     "build:ios": "flutter build ipa --release",
     "build:android": "flutter build appbundle --release",
-    "dev": "flutter run"
+    "dev": "xcrun simctl boot \"iPhone 17 Pro\" 2>/dev/null; open -a Simulator && flutter run -d \"iPhone 17 Pro\"",
+    "dev:android": "flutter emulators --launch Medium_Phone_API_36.1 && flutter run -d emulator"
   }
 }

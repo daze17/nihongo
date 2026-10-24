@@ -1,0 +1,37 @@
+{
+  "name": "@repo/contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "oRPC contract: every API endpoint's path, input and output. Shared by backend and admin.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "openapi": "node dist/write-openapi.js"
+  },
+  "dependencies": {
+    "@orpc/contract": "^1.16.1",
+    "@orpc/openapi": "^1.16.1",
+    "@orpc/zod": "^1.16.1",
+    "@repo/schema": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.13.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

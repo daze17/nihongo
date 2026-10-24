@@ -10,6 +10,24 @@ Legend: `- [ ]` todo · `- [x]` done · **Verify:** lines are the exit criteria 
 
 ---
 
+## Product direction
+
+A general "Duolingo for Japanese" is a crowded market (Duolingo, LingoDeer, Busuu, Anki,
+Renshuu, WaniKani, Bunpro). This app aims at a group the big apps don't serve:
+
+- **Who:** Mongolian speakers preparing to study or work in Japan.
+- **Goal they pay for:** passing **JFT-Basic** (Specified Skilled Worker route) or **JLPT N5/N4**,
+  plus workplace Japanese for their job field and daily-life Japanese for living in Japan.
+- **Language:** UI and explanations in **Mongolian first**. English is second. Vietnamese, Nepali,
+  Indonesian and Myanmar can follow the same path later.
+- **Who pays:** mainly **organisations** – Japanese language schools in Mongolia, recruitment /
+  sending agencies, and employers in Japan. Individual subscriptions are secondary.
+- **What they pay for:** class groups, teacher dashboards and progress reports (see "Schools" below).
+
+Validate this before building past Milestone 1 (Phase 0 checklist).
+
+---
+
 ## At a glance
 
 ```mermaid
@@ -120,7 +138,7 @@ flowchart LR
         direction TB
         subgraph apps
             MOB[apps/mobile<br/>Flutter]
-            APIX[apps/backend<br/>NestJS]
+            APIX[apps/backend/user<br/>NestJS]
         end
         subgraph packages
             SCH[packages/schema<br/>zod]
@@ -138,28 +156,28 @@ flowchart LR
 
 ## 0. Stack decisions
 
-| Layer            | Choice                                                                         | Why                                                                    |
-| ---------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| Monorepo         | Turborepo + pnpm 10                                                            | Caches Flutter + TS tasks, one `pnpm turbo run test` for everything    |
-| Mobile           | Flutter (Dart 3)                                                               | One codebase, strong custom drawing (stroke tracing), great animations |
-| State            | Riverpod 2 (code-gen)                                                          | Testable, no boilerplate, works well with Drift streams                |
-| Routing          | go_router                                                                      | Deep links, typed routes                                               |
-| Local DB         | Drift (SQLite)                                                                 | Offline-first lessons + SRS, reactive queries                          |
-| Backend          | NestJS 11 (TypeScript)                                                         | Shares zod schemas with content pipeline, first-class in Turborepo     |
-| ORM / migrations | Drizzle ORM + drizzle-kit                                                      | Typed SQL, migrations in repo, no codegen step                         |
-| Database         | Postgres 16 (Docker locally, Neon in prod)                                     | Managed backups + PITR, swap provider via connection string            |
-| Auth             | Own JWT (access + refresh) issued by API; Apple / Google ID-token verification | No third-party auth in the request path                                |
-| Storage          | Cloudflare R2 (S3-compatible)                                                  | Zero egress fees for audio                                             |
-| Jobs             | @nestjs/schedule (cron) now, BullMQ + Redis when needed                        | Streak audits, league rollover                                         |
-| API contract     | OpenAPI via @nestjs/swagger → generated Dart client                            | Flutter client stays in sync automatically                             |
-| Hosting          | Docker image on Fly.io (2 instances)                                           | Portable; move to VPS/k8s later without code changes                   |
-| Content pipeline | TypeScript package                                                             | Builds lesson JSON from JMdict / KanjiVG / KANJIDIC2                   |
-| Audio            | Azure Neural TTS (ja-JP Nanami / Keita) → mp3 in R2                            | Cheap, near-native quality                                             |
-| CI               | GitHub Actions                                                                 | Runs `turbo run lint test build`                                       |
+| Layer            | Choice                                                                                     | Why                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Monorepo         | Turborepo + pnpm 10                                                                        | Caches Flutter + TS tasks, one `pnpm turbo run test` for everything                                |
+| Mobile           | Flutter (Dart 3)                                                                           | One codebase, strong custom drawing (stroke tracing), great animations                             |
+| State            | Riverpod 2 (code-gen)                                                                      | Testable, no boilerplate, works well with Drift streams                                            |
+| Routing          | go_router                                                                                  | Deep links, typed routes                                                                           |
+| Local DB         | Drift (SQLite)                                                                             | Offline-first lessons + SRS, reactive queries                                                      |
+| Backend          | NestJS 11 (TypeScript)                                                                     | Shares zod schemas with content pipeline, first-class in Turborepo                                 |
+| ORM / migrations | Drizzle ORM + drizzle-kit                                                                  | Typed SQL, migrations in repo, no codegen step                                                     |
+| Database         | Postgres 16 (Docker locally, Neon in prod)                                                 | Managed backups + PITR, swap provider via connection string                                        |
+| Auth             | Own JWT (access + refresh) issued by API; Apple / Google ID-token verification             | No third-party auth in the request path                                                            |
+| Storage          | Cloudflare R2 (S3-compatible)                                                              | Zero egress fees for audio                                                                         |
+| Jobs             | @nestjs/schedule (cron) now, BullMQ + Redis when needed                                    | Streak audits, league rollover                                                                     |
+| API contract     | oRPC (`@orpc/contract` + zod) in `packages/contract`, implemented in Nest via `@orpc/nest` | Define each endpoint once. OpenAPI generated from it → Dart client; admin gets a typed oRPC client |
+| Hosting          | Docker image on Fly.io (2 instances)                                                       | Portable; move to VPS/k8s later without code changes                                               |
+| Content pipeline | TypeScript package                                                                         | Builds lesson JSON from JMdict / KanjiVG / KANJIDIC2                                               |
+| Audio            | Azure Neural TTS (ja-JP Nanami / Keita) → mp3 in R2                                        | Cheap, near-native quality                                                                         |
+| CI               | GitHub Actions                                                                             | Runs `turbo run lint test build`                                                                   |
 
 ### Backend architecture
 
-Owned backend: **NestJS + Drizzle + Postgres**, living in `apps/backend`. Decision made
+Owned backend: **NestJS + Drizzle + Postgres**, living in `apps/backend/user` (user API; a separate `apps/backend/admin` API comes later). Decision made
 after weighing Supabase (fastest, but vendor-shaped), Go (cheapest to run), Java/Spring
 (most battle-tested) and C++ (no fit). TypeScript wins because the content pipeline and
 schemas are already TypeScript, so one zod definition drives lesson JSON, DB seed, API
@@ -174,7 +192,8 @@ Principles:
 - **Stateless API, two instances.** No in-memory sessions; JWTs + Postgres. Either
   instance can die.
 - **Schemas shared, not duplicated.** `packages/schema` (zod) → `packages/db` (Drizzle
-  tables) → `apps/backend` DTOs → OpenAPI → Dart client. Change it once.
+  tables) and `packages/contract` (oRPC procedures) → `apps/backend/user` implements the contract →
+  OpenAPI → Dart client, and `apps/admin` uses the contract directly. Change it once.
 - **Boring observability from day one.** Pino structured logs, `/health` via Terminus,
   Sentry, uptime ping.
 
@@ -190,20 +209,23 @@ japanese_learn/
 │   │   ├── test/
 │   │   ├── pubspec.yaml
 │   │   └── package.json        # exposes flutter commands to turbo
-│   └── backend/                # NestJS backend
-│       ├── src/
-│       │   ├── auth/           # apple/google token verify, jwt issue/refresh
-│       │   ├── users/
-│       │   ├── sync/           # push/pull progress + item_reviews
-│       │   ├── content/        # read-only lesson/vocab endpoints
-│       │   ├── jobs/           # cron: streak audit, league rollover
-│       │   ├── health/
-│       │   └── main.ts
-│       ├── test/               # e2e with testcontainers
-│       ├── Dockerfile
-│       └── package.json
+│   └── backend/
+│       ├── user/               # NestJS API for the mobile app
+│       │   ├── src/
+│       │   │   ├── content/    # ✓ read-only content (controller → service → repository)
+│       │   │   ├── auth/       # apple/google token verify, jwt issue/refresh
+│       │   │   ├── profile/    # me, delete account
+│       │   │   ├── sync/       # push/pull progress, item_reviews, review_log
+│       │   │   ├── jobs/       # cron: streak audit, cleanup
+│       │   │   ├── config/ database/ orpc/ common/ health/ docs/
+│       │   │   └── main.ts
+│       │   ├── test/           # e2e against the docker-compose Postgres
+│       │   ├── Dockerfile
+│       │   └── package.json    # name: backend-user
+│       └── admin/              # (post-MVP) NestJS API for apps/admin, role-guarded
 ├── packages/
 │   ├── schema/                 # TS: zod schemas (source of truth for content + API DTOs)
+│   ├── contract/               # TS: oRPC contract (procedures, paths, input/output)
 │   ├── db/                     # TS: Drizzle schema, migrations, db client, seed helpers
 │   ├── content/                # TS: raw data → lesson JSON + seeds packages/db
 │   ├── eslint-config/
@@ -232,6 +254,12 @@ That's all you need.
 - [ ] Create accounts (no setup yet, just so they're ready): Neon, Cloudflare (R2), Fly.io, Sentry
 - [ ] Register Apple Developer account (needed for TestFlight, takes a few days to approve)
 - [ ] Register Google Play developer account
+
+**Market check (in parallel with Phases 1–6)**
+
+- [ ] Interview 5–10 Japanese language schools / sending agencies in Mongolia: what they use, where students fail, would they pay, how much
+- [ ] Mongolian landing page with an email / phone sign-up; measure interest
+- [ ] Find one school willing to pilot the Milestone 1 app with a real class for a month
 
 ---
 
@@ -266,6 +294,7 @@ That's all you need.
 - [x] Create `packages/schema` (TS, zod, vitest) – empty for now
 - [x] Create `packages/db` (TS, drizzle-orm, drizzle-kit, postgres driver) – empty for now
 - [x] Create `packages/content` (TS, tsx runner, vitest) – empty for now
+- [x] Create `packages/contract` (`@orpc/contract`, `@orpc/openapi`, zod from `packages/schema`)
 - [x] Add root `docker-compose.yml`: `postgres:16`, `redis:7`, `minio` (S3 stand-in for R2)
 - [x] Add `.env.example` at root; real `.env` git-ignored
 - [x] Add root `.prettierrc`, `.editorconfig`
@@ -301,6 +330,7 @@ Goal: empty app with navigation, theming, DI, local DB, and a settings screen th
 - [ ] Set up Drift database class with a `schemaVersion` and migration strategy
 - [ ] Add a `settings` table (daily goal, sound on/off, furigana mode, theme)
 - [ ] Settings screen reads/writes via Riverpod + Drift stream
+- [ ] Localisation from day one: `flutter_localizations` + ARB files, **`mn` default**, `en` second; no hard-coded UI strings
 - [ ] Add a `flavors` setup: `dev` (API on localhost) and `prod` (Fly.io API)
 - [ ] Add `flutter_native_splash` + app icon placeholder
 - [ ] Write one widget test and one Drift unit test so the test pipeline is proven
@@ -336,7 +366,7 @@ Goal: lesson content is generated JSON, not hand-written Dart.
 - [ ] `build-course.ts`: authored YAML course outline → generates `Lesson` JSON with exercises
 - [ ] Output everything to `apps/mobile/assets/content/` and `packages/db/seed/`
 - [ ] Add `content:build` turbo task; mobile `build` depends on it
-- [ ] Author the first course outline: Unit 1–5 hiragana rows, Unit 6–10 katakana, Unit 11 greetings
+- [ ] Author the first course outline aimed at JFT-Basic / N5: Unit 1–5 hiragana rows, Unit 6–10 katakana, Unit 11 greetings & self-introduction. Explanations and mnemonics in Mongolian (English as second language)
 - [ ] Verify: `pnpm turbo run content:build` produces valid JSON, Flutter can load it
 
 ### Flutter side
@@ -478,6 +508,7 @@ Done in four sub-steps, each deployable on its own.
   - `lesson_progress (user_id, lesson_id, completed_at, best_accuracy, attempts, updated_at, pk(user_id, lesson_id))`
   - `item_reviews (user_id, item_id, item_type, stability, difficulty, due, last_review, reps, lapses, updated_at, pk(user_id, item_id))`
   - `achievements_unlocked (user_id, achievement_id, unlocked_at, pk(user_id, achievement_id))`
+  - `review_log (id, user_id, item_id, exercise_type, grade, correct, response_ms, reviewed_at, client_tz, app_version)` – append-only history of every answer. Synced with progress. Cheap now, impossible to backfill later; the ML work depends on it
   - `sync_log (user_id, device_id, synced_at)`
   - Content tables: `kana`, `kanji`, `vocab`, `sentences`, `units`, `lessons` (jsonb payload + version) – read-only to clients, lets you ship content without an app release
 - [x] Indexes: `item_reviews(user_id, due)`, `item_reviews(user_id, updated_at)`, `lesson_progress(user_id, updated_at)`
@@ -486,9 +517,9 @@ Done in four sub-steps, each deployable on its own.
 - [x] `seed.ts` imports `packages/content` output into content tables
 - [x] Verify: `docker compose up -d && pnpm db:migrate && pnpm db:seed` on a clean DB
 
-### 7b. API skeleton (`apps/backend`)
+### 7b. API skeleton (`apps/backend/user`)
 
-- [x] NestJS 12 (ESM) in `apps/backend`, pnpm workspace, strict TS, `@repo/*` workspace deps
+- [x] NestJS 12 (ESM) in `apps/backend/user`, pnpm workspace, strict TS, `@repo/*` workspace deps
 - [x] Config module with zod-validated env (base vars done; add `JWT_SECRET`, `R2_*`, `APPLE_CLIENT_ID`, `GOOGLE_CLIENT_ID`, `SENTRY_DSN` as features land)
 - [x] `DrizzleModule`: global provider wrapping `packages/db` client with connection pool
 - [x] Pino logger (`nestjs-pino`), request id, redaction of auth headers
@@ -502,8 +533,31 @@ Done in four sub-steps, each deployable on its own.
 - [x] Multi-stage `Dockerfile` (pnpm fetch → build → node:22-slim runtime, non-root user)
 - [x] Verify: `docker build` + run container → `/health` returns 200
 
+### 7b′. Move the API onto oRPC (do this before 7c, while only 3 endpoints exist)
+
+Why: one contract defines path, input and output for every endpoint. The backend implements it,
+the OpenAPI spec is generated from it, the Dart client is generated from that spec, and the
+admin app imports the contract for a fully typed client with no codegen.
+
+```
+packages/schema (zod) ─▶ packages/contract (oRPC) ─┬─▶ apps/backend/user  @Implement in Nest controllers
+                                                   ├─▶ openapi.json  ─▶ Dart client (apps/mobile)
+                                                   └─▶ apps/admin    typed oRPC client
+```
+
+- [x] `packages/contract`: `content.manifest`, `content.kana` procedures with `openapi.path` meta and zod output schemas
+- [x] `apps/backend/user`: add `@orpc/nest`, `@orpc/server`, `@orpc/openapi`; register `ORPCModule`
+- [x] Content controller implements the contract with `@Implement(contract.content.*)`; health endpoints stay plain Nest
+- [x] Generate `openapi.json` with `@orpc/openapi`'s generator; drop `@nestjs/swagger` decorators and `ZodValidationPipe`
+- [x] Serve API reference in dev: Scalar at `/docs`, spec at `/openapi.json`
+- [x] problem+json for oRPC errors via `sendResponseInterceptors` (oRPC 1.16 has no Rethrow plugin; that's in the 2.x beta)
+- [x] Body size capped by Nest's JSON body parser (100 kb), kept on instead of `bodyParser: false`; oRPC 1.16 has no Request Limit plugin
+- [x] Update e2e tests; guards and pipes only run over HTTP, not in `call()` unit tests
+- [x] Verify: `/v1/content/*` responses unchanged, `openapi.json` paths unchanged, e2e green
+
 ### 7c. Auth
 
+- [ ] Contracts `auth.apple`, `auth.google`, `auth.refresh`, `auth.logout`, `auth.logoutAll`, `users.deleteMe` in `packages/contract`
 - [ ] `POST /auth/apple` – verify Apple identity token (`apple-signin-auth`), upsert user by `apple_sub`
 - [ ] `POST /auth/google` – verify Google ID token (`google-auth-library`), upsert user by `google_sub`
 - [ ] Issue access JWT (15 min) + opaque refresh token (30 days, hashed in `refresh_tokens`, rotated on use, per device)
@@ -517,6 +571,7 @@ Done in four sub-steps, each deployable on its own.
 
 ### 7d. Sync
 
+- [ ] Contract `sync.push` in `packages/contract`; zod input/output reused from `packages/schema`
 - [ ] `POST /sync` – body `{ deviceId, lastSyncAt, changes: { userStats?, lessonProgress[], itemReviews[], achievements[] } }`
   - server applies pushes with per-row conflict rule: `updated_at` last-write-wins for progress/reviews, `max()` for xp/streak, union for achievements
   - returns rows changed on server since `lastSyncAt` + new `syncedAt`
@@ -559,7 +614,7 @@ Done in four sub-steps, each deployable on its own.
 - [ ] Haptics on answer
 - [ ] Empty states, error states, offline banner
 - [ ] Accessibility: semantics labels, font scaling, reduce-motion respected
-- [ ] Localise UI strings (`flutter_localizations` + ARB): English first, Mongolian second
+- [ ] Review all Mongolian and English strings with a native speaker / teacher (localisation itself starts in Phase 2)
 - [ ] Analytics: PostHog (self-host or cloud), events: lesson_start, lesson_complete, exercise_answer, streak_lost
 - [ ] Crash reporting: Sentry
 - [ ] Performance pass: 60 fps on a mid-range Android device, cold start < 2 s
@@ -591,7 +646,10 @@ Done in four sub-steps, each deployable on its own.
 - [ ] Timed Blitz mode for kana/vocab
 - [ ] Counters & numbers mini-game
 - [ ] Monetisation: Super tier (unlimited hearts, no ads, offline packs) via RevenueCat
+- [ ] **Schools (B2B): organisations, classes, teacher dashboard – see breakdown below. Likely the first thing customers pay for**
 - [ ] Admin panel (`apps/admin`, Next.js) – see breakdown below
+- [ ] Machine learning (`apps/ml`, Python) – see breakdown below
+- [ ] Course tracks: JFT-Basic mock tests, JLPT N4, workplace Japanese per job field (nursing care, food service, construction…), daily life in Japan
 - [ ] Move cron jobs to BullMQ + Redis when they need retries/visibility; move audio generation there too
 - [ ] Read replicas / connection pooling (PgBouncer or Neon pooler) when sync traffic grows
 
@@ -599,32 +657,75 @@ Done in four sub-steps, each deployable on its own.
 
 ### Admin panel (post-MVP)
 
-One web app in `apps/admin`, talking only to `apps/backend` admin routes. No direct DB access from the browser.
+One web app in `apps/admin`, talking only to the admin API in `apps/backend/admin` (separate NestJS app, same packages). No direct DB access from the browser.
 
 ```
-apps/admin (Next.js)  ──HTTPS + admin JWT──▶  apps/backend /v1/admin/*  ──▶  Postgres
+apps/admin (Next.js)  ──HTTPS + admin JWT──▶  apps/backend/admin /v1/admin/*  ──▶  Postgres
 ```
 
 **Foundation**
+
 - [ ] `role` enum on `users` (`user`, `support`, `admin`) + migration
 - [ ] `RolesGuard` + `@Roles('admin')` decorator in backend; all admin routes under `/v1/admin`
 - [ ] Admin sign-in (Google workspace account or email magic link), separate from the app's Apple/Google flow
 - [ ] `admin_audit_log (id, admin_id, action, target_user_id, payload jsonb, created_at)` – every admin write is logged
-- [ ] Scaffold `apps/admin` with Next.js + generated TS client from the same `openapi.json`
+- [ ] Scaffold `apps/admin` with Next.js + typed oRPC client (`@orpc/client`) importing `packages/contract`; admin procedures live under `admin.*`
 
 **User management**
+
 - [ ] User list: search by email / username / id, filter by created date, last active, streak
 - [ ] User detail: profile, stats, streak history, lesson progress, devices (refresh tokens), sync log
 - [ ] Actions: suspend / unsuspend, revoke all sessions, restore a lost streak, grant gems / streak freezes, delete account (with confirm)
 - [ ] Support notes on a user (visible to support + admin)
 
 **Content management**
+
 - [ ] Browse / edit kana, kanji, vocab, sentences, lessons (validated by `packages/schema`)
 - [ ] Publish flow: draft → preview → bump `content_manifest.version` (apps pick it up on next sync)
 
 **Insights**
+
 - [ ] Dashboard: DAU / WAU, signups, lesson completions, streak distribution, retention (D1 / D7 / D30)
 - [ ] Hardest items: exercises with the highest error rate, to fix content
+
+### Schools (B2B)
+
+Schools and agencies buy seats for their students and want to see progress. Built on the same
+backend and the admin web app.
+
+- [ ] `organizations`, `org_members (role: owner | teacher | student)`, `classes`, `class_members` tables
+- [ ] Join a class with an invite code or QR in the mobile app
+- [ ] Teacher view (web, in `apps/admin` with an org-scoped role): class roster, streaks, lessons done, weak items per student
+- [ ] Assign homework: a set of lessons / review targets with a due date
+- [ ] Progress report export (PDF / CSV) per student and per class, in Mongolian
+- [ ] Seat-based licensing: org buys N seats for a period; students in a class get premium features
+- [ ] Mock-test mode with JFT-Basic-style sections and a score report
+
+### Machine learning (post-MVP, `apps/ml`)
+
+Python service, managed with `uv`, FastAPI for the few live endpoints. Lives in the monorepo
+with a small `package.json` so Turbo runs its lint/test/build, like `apps/mobile`. Mostly batch
+jobs that read Postgres (a read replica later) and write results back to tables the NestJS
+backend reads. The mobile app never calls Python directly; live calls go through the oRPC
+contract. Models used during lessons run on device so lessons stay offline.
+
+```
+review_log ─▶ apps/ml (batch) ─▶ fsrs_params, item_difficulty tables ─▶ backend ─▶ app (via sync)
+app ─audio─▶ backend ─▶ apps/ml /score-pronunciation (live)
+apps/ml (training) ─▶ .tflite / Core ML ─▶ bundled in apps/mobile (on device)
+```
+
+In order of value:
+
+- [ ] **Personal FSRS parameters**: nightly job runs the FSRS optimizer per user from `review_log`, stores `fsrs_params`, app picks them up on sync
+- [ ] **Handwriting recognition** for kana/kanji tracing: train in Python, export to TensorFlow Lite / Core ML, run on device
+- [ ] **Item difficulty & content quality**: flag exercises with unusual error rates; shown in the admin panel
+- [ ] **Churn prediction**: score users at risk of breaking their streak; better-timed reminders
+- [ ] **Pronunciation scoring** (server): ASR (e.g. Whisper) + alignment; pitch-accent feedback later
+- [ ] **LLM practice** via the Claude API in the NestJS backend (no Python needed): grammar explanations in Mongolian, short role-play dialogues
+- [ ] Docker image for `apps/ml`, added to `docker-compose.yml`; separate Fly.io app in prod
+
+Skip until there are many users: custom recommendation engines, training own language models.
 
 ## Working rules
 
@@ -632,5 +733,6 @@ apps/admin (Next.js)  ──HTTPS + admin JWT──▶  apps/backend /v1/admin/*
 - Every exercise type gets a widget test with a fake controller.
 - Content changes never require Dart changes. If they do, the schema is wrong.
 - Keep the app usable with zero network until Phase 7, and after Phase 7 too.
-- Every API change goes through `packages/schema` first; regenerate the Dart client, never hand-edit it.
+- Every API change starts in `packages/contract` (oRPC, with zod from `packages/schema`); regenerate the Dart client, never hand-edit it.
+- Backend layers: controller (oRPC contract) → service (business rules, never touches the DB) → repository (`*.repository.ts`, the only code that imports Drizzle). Enforced by ESLint.
 - Migrations are forward-only and reviewed; no `drizzle-kit push` against prod.
