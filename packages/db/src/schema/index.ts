@@ -1,3 +1,3 @@
-export * from './content.js';
-export * from './progress.js';
-export * from './users.js';
+export * from "./content";
+export * from "./progress";
+export * from "./users";

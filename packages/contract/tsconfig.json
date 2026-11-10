@@ -1,1 +1,8 @@
-{ "extends": "@repo/tsconfig/library.json" }
+{
+  "extends": "@repo/tsconfig/library.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

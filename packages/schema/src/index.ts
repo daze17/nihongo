@@ -1,1 +1,1 @@
-export * from './kana.js';
+export * from "./kana";

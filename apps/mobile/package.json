@@ -11,7 +11,7 @@
     "build": "flutter build apk --debug",
     "build:ios": "flutter build ipa --release",
     "build:android": "flutter build appbundle --release",
-    "dev": "xcrun simctl boot \"iPhone 17 Pro\" 2>/dev/null; open -a Simulator && flutter run -d \"iPhone 17 Pro\"",
-    "dev:android": "flutter emulators --launch Medium_Phone_API_36.1 && flutter run -d emulator"
+    "dev": "xcrun simctl boot \"iPhone 17 Pro\" 2>/dev/null; open -a Simulator && flutter run -d \"iPhone 17 Pro\" $([ -f config/dev.json ] && echo --dart-define-from-file=config/dev.json)",
+    "dev:android": "flutter emulators --launch Medium_Phone_API_36.1 && flutter run -d emulator $([ -f config/dev.json ] && echo --dart-define-from-file=config/dev.json)"
   }
 }

@@ -22,11 +22,11 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # 3. Minimal runtime: compiled JS, prod deps, migrations.
 FROM node:22-slim AS runtime
-ENV NODE_ENV=production PORT=8080
+ENV NODE_ENV=production APP_ENV=production APP_PORT=8080
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s \
-  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "dist/main.js"]
+  CMD node -e "fetch('http://127.0.0.1:'+process.env.APP_PORT+'/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/main"]

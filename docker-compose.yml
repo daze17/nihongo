@@ -9,11 +9,11 @@ services:
       POSTGRES_PASSWORD: nihongo
       POSTGRES_DB: nihongo
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U nihongo -d nihongo']
+      test: ["CMD-SHELL", "pg_isready -U nihongo -d nihongo"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -21,9 +21,9 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - '6380:6379' # 6379 often taken by other projects
+      - "6380:6379" # 6379 often taken by other projects
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -36,12 +36,12 @@ services:
       MINIO_ROOT_USER: nihongo
       MINIO_ROOT_PASSWORD: nihongo-secret
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 3s
       retries: 10

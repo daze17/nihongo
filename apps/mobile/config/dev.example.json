@@ -1,0 +1,5 @@
+{
+  "AUTH0_DOMAIN": "your-tenant.jp.auth0.com",
+  "AUTH0_CLIENT_ID": "your-native-app-client-id",
+  "AUTH0_AUDIENCE": "https://api.nihongo.app"
+}

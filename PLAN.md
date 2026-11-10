@@ -1,7 +1,8 @@
 # Japanese Learning App – Build Plan
 
-Duolingo-style mobile app for Japanese. Flutter app inside a Turborepo monorepo,
-NestJS + Drizzle + Postgres backend, TypeScript content pipeline.
+Mobile app that teaches Mongolians Japanese and tracks what they still need before they can
+go to Japan. Flutter app inside a Turborepo monorepo, NestJS + Drizzle + Postgres backend,
+TypeScript content pipeline.
 
 Work top to bottom. Each phase ends with something runnable. Don't start the next
 phase until the checklist for the current one is done.
@@ -12,19 +13,38 @@ Legend: `- [ ]` todo · `- [x]` done · **Verify:** lines are the exit criteria 
 
 ## Product direction
 
-A general "Duolingo for Japanese" is a crowded market (Duolingo, LingoDeer, Busuu, Anki,
-Renshuu, WaniKani, Bunpro). This app aims at a group the big apps don't serve:
+General Japanese apps are a crowded market (Duolingo, LingoDeer, Busuu, Anki, Renshuu,
+WaniKani, Bunpro). This app is not another one of those. It answers two questions for one
+group of people:
 
-- **Who:** Mongolian speakers preparing to study or work in Japan.
-- **Goal they pay for:** passing **JFT-Basic** (Specified Skilled Worker route) or **JLPT N5/N4**,
-  plus workplace Japanese for their job field and daily-life Japanese for living in Japan.
-- **Language:** UI and explanations in **Mongolian first**. English is second. Vietnamese, Nepali,
-  Indonesian and Myanmar can follow the same path later.
-- **Who pays:** mainly **organisations** – Japanese language schools in Mongolia, recruitment /
-  sending agencies, and employers in Japan. Individual subscriptions are secondary.
-- **What they pay for:** class groups, teacher dashboards and progress reports (see "Schools" below).
+> **"How good is my Japanese?"** and **"What else do I need before I can go to Japan?"**
 
-Validate this before building past Milestone 1 (Phase 0 checklist).
+- **Who:** Mongolians preparing to work or study in Japan, mostly on the Specified Skilled
+  Worker (特定技能) route, plus engineers and students.
+- **Learning Japanese (the core):** kana → N5 / A2 → N4, explained in **Mongolian first**
+  (English second), with mock **JFT-Basic** and **JLPT N4** tests and job-field vocabulary
+  (care, food service, agriculture, aviation).
+- **Japan readiness:** the student picks a path (Specified Skilled Worker + field, engineer,
+  student). The app shows every requirement for that path – Japanese level, skills test,
+  documents, pre-departure training – with their status, and one **"Ready for Japan: N%"** score.
+  Teachers confirm items such as a passed exam, so the score can be trusted.
+- **Who pays:** organisations that send people to Japan. First pilot target: **GTN Mongolia**'s
+  Japanese language school in Ulaanbaatar (GTN runs recruitment, pre-departure training and
+  post-arrival support for Mongolians going to Japan). Students use it free through their school.
+- **Requirements data:** exact requirements differ by field and change over time. Source them
+  from GTN Mongolia's training team and official Japanese government pages, keep them in
+  content files (not code), and date-stamp every rule.
+
+**Stages.** Build stage 1 first; the later stages reuse its data and are on the roadmap.
+
+| Stage                     | What the app does                                                               | Status   |
+| ------------------------- | ------------------------------------------------------------------------------- | -------- |
+| 1. Learn + get ready      | Course, mock tests, requirement checklist, readiness score, school classes      | **MVP**  |
+| 2. Get hired              | Verified candidate profile for employers (level, readiness, interview answers)  | Post-MVP |
+| 3. Prepare to leave       | Pre-departure training: workplace Japanese, manners, life rules                 | Post-MVP |
+| 4. Arrive + live in Japan | Arrival checklist (residence card, housing, SIM, bank) and support in Mongolian | Post-MVP |
+
+Validate stage 1 with the pilot school before building past Milestone 1 (Phase 0 checklist).
 
 ---
 
@@ -35,36 +55,36 @@ flowchart LR
     P0[0 Prereqs] --> P1[1 Monorepo]
     P1 --> P2[2 Flutter<br/>foundation]
     P2 --> P3[3 Content<br/>pipeline]
-    P3 --> P4[4 Lesson engine<br/>+ kana games]
+    P3 --> P4[4 Lesson engine<br/>kana → N5]
     P4 --> P5[5 SRS]
-    P5 --> P6[6 Gamification]
-    P6 --> M1{{🎉 Milestone 1<br/>Offline kana app}}
-    M1 --> P7[7 Backend<br/>NestJS + Drizzle]
+    P5 --> P6[6 Mock tests +<br/>Japan readiness]
+    P6 --> M1{{🎉 Milestone 1<br/>Learn + readiness,<br/>offline}}
+    M1 --> P7[7 Backend<br/>auth · sync · classes]
     P7 --> P8[8 Audio]
-    P8 --> P9[9 Polish]
+    P8 --> P9[9 Polish +<br/>motivators]
     P9 --> P10[10 Release]
-    P10 --> M2{{🚀 Milestone 2<br/>In stores}}
-    M2 --> P11[Post-MVP:<br/>vocab · kanji · leagues]
+    P10 --> M2{{🚀 Milestone 2<br/>Pilot school live}}
+    M2 --> P11[Post-MVP:<br/>N4 · hiring · departure · life in Japan]
 
     style M1 fill:#ffe9a8,stroke:#c9a227
     style M2 fill:#c8f7c5,stroke:#3c9d3c
 ```
 
-| #      | Phase                | What you can do when it's done                            | Rough effort           |
-| ------ | -------------------- | --------------------------------------------------------- | ---------------------- |
-| 0      | Prerequisites        | Tools installed, accounts created                         | 1 day                  |
-| 1      | Monorepo             | `pnpm turbo run lint test` passes, empty Flutter app runs | 1 day                  |
-| 2      | Flutter foundation   | Navigation, theme, local DB, settings that persist        | 3–4 days               |
-| 3      | Content pipeline     | Lesson JSON generated from real dictionary data           | 4–5 days               |
-| 4      | Lesson engine + kana | Play a full hiragana lesson with 5 exercise types         | 1.5–2 weeks            |
-| 5      | SRS                  | Practice tab shows due items, weak ones come back sooner  | 3–4 days               |
-| 6      | Gamification         | XP, streaks, hearts, achievements, reminders              | 1 week                 |
-| **M1** | **Offline kana app** | **Shippable to friends as a TestFlight build**            | **~6 weeks total**     |
-| 7      | Backend              | Sign in with Apple/Google, progress syncs between devices | 2 weeks                |
-| 8      | Audio                | Native-quality TTS for every item, cached offline         | 2–3 days               |
-| 9      | Polish               | Onboarding, animations, analytics, crash reports          | 1 week                 |
-| 10     | Release              | Live on App Store + Google Play                           | 1 week + review time   |
-| **M2** | **In stores**        |                                                           | **~11–12 weeks total** |
+| #      | Phase                        | What you can do when it's done                                      | Rough effort         |
+| ------ | ---------------------------- | ------------------------------------------------------------------- | -------------------- |
+| 0      | Prerequisites                | Tools installed, accounts created, pilot school found               | 1 day                |
+| 1      | Monorepo                     | `pnpm turbo run lint test` passes, empty Flutter app runs           | 1 day                |
+| 2      | Flutter foundation           | Navigation, theme, local DB, settings that persist                  | 3–4 days             |
+| 3      | Content pipeline             | Lessons, tests and requirement rules generated from content files   | 4–5 days             |
+| 4      | Lesson engine + kana → N5    | Play kana and first N5 lessons with 5 exercise types                | 2–3 weeks            |
+| 5      | SRS                          | Review tab shows due items, weak ones come back sooner              | 3–4 days             |
+| 6      | Mock tests + Japan readiness | Take a mock JFT-Basic; see requirements and "Ready for Japan" score | 1.5–2 weeks          |
+| **M1** | **Learn + readiness app**    | **Shippable to the pilot class as a TestFlight / internal build**   | **~8 weeks total**   |
+| 7      | Backend                      | Auth0 sign-in, progress sync, classes with join codes, teacher view | 2–3 weeks            |
+| 8      | Audio                        | Native-quality TTS for every item, cached offline                   | 2–3 days             |
+| 9      | Polish + motivators          | Onboarding, daily goal, streak, reminders, analytics, crash reports | 1 week               |
+| 10     | Release                      | Live on App Store + Google Play, pilot class using it               | 1 week + review time |
+| **M2** | **Pilot school live**        |                                                                     | **~14 weeks total**  |
 
 Effort assumes evenings/weekends, one person. Halve it if full-time.
 
@@ -90,11 +110,11 @@ flowchart TB
     end
 
     R2[(Cloudflare R2<br/>audio mp3)]
-    APPLE[Apple / Google<br/>ID tokens]
+    APPLE[Auth0<br/>Google · Facebook · Apple · email]
 
     SYNC -- "POST /sync  (JWT)" --> API
     UI -- "stream + cache" --> R2
-    UI -- "sign in" --> APPLE -- "verify token" --> API
+    UI -- "sign in" --> APPLE -- "access token (RS256)" --> API
 
     subgraph build[🛠 Build-time  –  Turborepo]
         RAW[JMdict · KanjiVG<br/>KANJIDIC2 · Tatoeba]
@@ -156,24 +176,24 @@ flowchart LR
 
 ## 0. Stack decisions
 
-| Layer            | Choice                                                                                     | Why                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| Monorepo         | Turborepo + pnpm 10                                                                        | Caches Flutter + TS tasks, one `pnpm turbo run test` for everything                                |
-| Mobile           | Flutter (Dart 3)                                                                           | One codebase, strong custom drawing (stroke tracing), great animations                             |
-| State            | Riverpod 2 (code-gen)                                                                      | Testable, no boilerplate, works well with Drift streams                                            |
-| Routing          | go_router                                                                                  | Deep links, typed routes                                                                           |
-| Local DB         | Drift (SQLite)                                                                             | Offline-first lessons + SRS, reactive queries                                                      |
-| Backend          | NestJS 11 (TypeScript)                                                                     | Shares zod schemas with content pipeline, first-class in Turborepo                                 |
-| ORM / migrations | Drizzle ORM + drizzle-kit                                                                  | Typed SQL, migrations in repo, no codegen step                                                     |
-| Database         | Postgres 16 (Docker locally, Neon in prod)                                                 | Managed backups + PITR, swap provider via connection string                                        |
-| Auth             | Own JWT (access + refresh) issued by API; Apple / Google ID-token verification             | No third-party auth in the request path                                                            |
-| Storage          | Cloudflare R2 (S3-compatible)                                                              | Zero egress fees for audio                                                                         |
-| Jobs             | @nestjs/schedule (cron) now, BullMQ + Redis when needed                                    | Streak audits, league rollover                                                                     |
-| API contract     | oRPC (`@orpc/contract` + zod) in `packages/contract`, implemented in Nest via `@orpc/nest` | Define each endpoint once. OpenAPI generated from it → Dart client; admin gets a typed oRPC client |
-| Hosting          | Docker image on Fly.io (2 instances)                                                       | Portable; move to VPS/k8s later without code changes                                               |
-| Content pipeline | TypeScript package                                                                         | Builds lesson JSON from JMdict / KanjiVG / KANJIDIC2                                               |
-| Audio            | Azure Neural TTS (ja-JP Nanami / Keita) → mp3 in R2                                        | Cheap, near-native quality                                                                         |
-| CI               | GitHub Actions                                                                             | Runs `turbo run lint test build`                                                                   |
+| Layer            | Choice                                                                                                              | Why                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Monorepo         | Turborepo + pnpm 10                                                                                                 | Caches Flutter + TS tasks, one `pnpm turbo run test` for everything                                                |
+| Mobile           | Flutter (Dart 3)                                                                                                    | One codebase, strong custom drawing (stroke tracing), great animations                                             |
+| State            | Riverpod 2 (code-gen)                                                                                               | Testable, no boilerplate, works well with Drift streams                                                            |
+| Routing          | go_router                                                                                                           | Deep links, typed routes                                                                                           |
+| Local DB         | Drift (SQLite)                                                                                                      | Offline-first lessons + SRS, reactive queries                                                                      |
+| Backend          | NestJS 11 (TypeScript)                                                                                              | Shares zod schemas with content pipeline, first-class in Turborepo                                                 |
+| ORM / migrations | Drizzle ORM + drizzle-kit                                                                                           | Typed SQL, migrations in repo, no codegen step                                                                     |
+| Database         | Postgres 16 (Docker locally, Neon in prod)                                                                          | Managed backups + PITR, swap provider via connection string                                                        |
+| Auth             | Auth0 (Universal Login: Google, Facebook, Apple, email). API verifies Auth0 access tokens against the tenant's JWKS | Social logins and refresh-token rotation without building them; the API stays stateless and only checks signatures |
+| Storage          | Cloudflare R2 (S3-compatible)                                                                                       | Zero egress fees for audio                                                                                         |
+| Jobs             | @nestjs/schedule (cron) now, BullMQ + Redis when needed                                                             | Streak audits, league rollover                                                                                     |
+| API contract     | oRPC (`@orpc/contract` + zod) in `packages/contract`, implemented in Nest via `@orpc/nest`                          | Define each endpoint once. OpenAPI generated from it → Dart client; admin gets a typed oRPC client                 |
+| Hosting          | Docker image on Fly.io (2 instances)                                                                                | Portable; move to VPS/k8s later without code changes                                                               |
+| Content pipeline | TypeScript package                                                                                                  | Builds lesson JSON from JMdict / KanjiVG / KANJIDIC2                                                               |
+| Audio            | Azure Neural TTS (ja-JP Nanami / Keita) → mp3 in R2                                                                 | Cheap, near-native quality                                                                                         |
+| CI               | GitHub Actions                                                                                                      | Runs `turbo run lint test build`                                                                                   |
 
 ### Backend architecture
 
@@ -213,7 +233,7 @@ japanese_learn/
 │       ├── user/               # NestJS API for the mobile app
 │       │   ├── src/
 │       │   │   ├── content/    # ✓ read-only content (controller → service → repository)
-│       │   │   ├── auth/       # apple/google token verify, jwt issue/refresh
+│       │   │   ├── auth/       # Auth0 access-token verification, AuthGuard
 │       │   │   ├── profile/    # me, delete account
 │       │   │   ├── sync/       # push/pull progress, item_reviews, review_log
 │       │   │   ├── jobs/       # cron: streak audit, cleanup
@@ -259,7 +279,8 @@ That's all you need.
 
 - [ ] Interview 5–10 Japanese language schools / sending agencies in Mongolia: what they use, where students fail, would they pay, how much
 - [ ] Mongolian landing page with an email / phone sign-up; measure interest
-- [ ] Find one school willing to pilot the Milestone 1 app with a real class for a month
+- [ ] Pitch the pilot to GTN Mongolia's language school: one class, one month, Milestone 1 build
+- [ ] Get the requirement checklist for the Specified Skilled Worker route (Japanese level, skills test per field, documents, pre-departure training, Mongolian government steps) from GTN Mongolia's training team; cross-check with official pages
 
 ---
 
@@ -308,9 +329,9 @@ That's all you need.
 
 Goal: empty app with navigation, theming, DI, local DB, and a settings screen that persists.
 
-- [ ] Add dependencies: `flutter_riverpod`, `riverpod_annotation`, `go_router`, `drift`, `sqlite3_flutter_libs`, `path_provider`, `freezed_annotation`, `json_annotation`, `flutter_animate`, `google_fonts`
-- [ ] Add dev deps: `build_runner`, `riverpod_generator`, `freezed`, `json_serializable`, `drift_dev`, `mocktail`, `very_good_analysis` (lint rules)
-- [ ] Decide folder structure (feature-first):
+- [ ] Add dependencies (done: `flutter_riverpod`, `go_router`, `google_fonts`, `flutter_localizations`, `intl`; still to add): `riverpod_annotation`, `drift`, `sqlite3_flutter_libs`, `path_provider`, `freezed_annotation`, `json_annotation`, `flutter_animate`
+- [ ] Add dev deps (done: `very_good_analysis`; still to add): `build_runner`, `riverpod_generator`, `freezed`, `json_serializable`, `drift_dev`, `mocktail`
+- [x] Decide folder structure (feature-first):
   ```
   lib/
   ├── app/            # MaterialApp, router, theme
@@ -324,16 +345,16 @@ Goal: empty app with navigation, theming, DI, local DB, and a settings screen th
   │   └── settings/
   └── main.dart
   ```
-- [ ] Set up `go_router` with routes: `/onboarding`, `/home`, `/lesson/:id`, `/review`, `/profile`, `/settings`
-- [ ] Bottom nav shell: Learn · Practice · Profile
-- [ ] Theme: pick a palette, define `ColorScheme` light + dark, a Japanese-capable font (Noto Sans JP via `google_fonts`)
+- [x] Set up `go_router` with routes: `/onboarding`, `/home`, `/lesson/:id` (+ `/complete`), `/review`, `/profile` — `/settings` comes with the settings screen
+- [x] Bottom nav shell: Learn · Practice · Profile
+- [ ] Theme (light done: GTN-style red/black/white, Noto Sans + Noto Sans JP + Montserrat; dark still to do): pick a palette, define `ColorScheme` light + dark, a Japanese-capable font (Noto Sans JP via `google_fonts`)
 - [ ] Set up Drift database class with a `schemaVersion` and migration strategy
 - [ ] Add a `settings` table (daily goal, sound on/off, furigana mode, theme)
 - [ ] Settings screen reads/writes via Riverpod + Drift stream
-- [ ] Localisation from day one: `flutter_localizations` + ARB files, **`mn` default**, `en` second; no hard-coded UI strings
+- [x] Localisation from day one: `flutter_localizations` + ARB files, **`mn` default**, `en` second; no hard-coded UI strings
 - [ ] Add a `flavors` setup: `dev` (API on localhost) and `prod` (Fly.io API)
 - [ ] Add `flutter_native_splash` + app icon placeholder
-- [ ] Write one widget test and one Drift unit test so the test pipeline is proven
+- [ ] Write one widget test (done: app flow + lesson controller tests) and one Drift unit test so the test pipeline is proven
 - [ ] Verify: app runs on iOS simulator and Android emulator, settings persist across restart
 
 ---
@@ -377,9 +398,10 @@ Goal: lesson content is generated JSON, not hand-written Dart.
 
 ---
 
-## 6. Phase 4 – Lesson engine + kana exercises (the MVP core)
+## 6. Phase 4 – Lesson engine + kana → N5 (the MVP core)
 
-Goal: complete a hiragana lesson start to finish.
+Goal: complete hiragana, katakana and the first N5 units start to finish. Grammar and examples
+explained in Mongolian.
 
 ```
  Home / path                 Lesson                      Complete
@@ -436,7 +458,10 @@ stateDiagram-v2
 
 ### Home / path
 
-- [ ] Learning path screen: vertical list of unit → lesson nodes, locked / available / completed states
+Home ends up showing the readiness score, today's lesson and the next requirement (Phase 6b).
+The course path is one tab, not the whole app.
+
+- [ ] Course screen: vertical list of unit → lesson nodes, locked / available / completed states
 - [ ] Unit header with title and colour
 - [ ] Tapping an available node starts the lesson
 - [ ] Verify: new user can do Unit 1 Lesson 1 → 5 and the path unlocks progressively
@@ -465,32 +490,46 @@ flowchart LR
 
 ---
 
-## 8. Phase 6 – Gamification
+## 8. Phase 6 – Mock tests + Japan readiness
 
-```mermaid
-flowchart LR
-    L[Lesson / review complete] --> XP[+XP]
-    XP --> GOAL{daily goal<br/>reached?}
-    GOAL -- first time today --> STREAK[streak +1 🔥]
-    GOAL -- already --> NOP[ ]
-    MISS[Day with no goal] --> FREEZE{streak freeze?}
-    FREEZE -- yes --> KEEP[consume freeze,<br/>streak kept]
-    FREEZE -- no --> RESET[streak = 0]
-    WRONG[Wrong answer] --> HEART[❤️ -1]
-    HEART --> ZERO{hearts = 0?}
-    ZERO -- yes --> END[lesson ends,<br/>refill 1 per 4 h]
-    XP & STREAK --> ACH[Achievements check]
+Goal: a student knows their Japanese level and exactly what is left before they can go.
+
+```
+ Home                          Requirements (SSW · Care)
+┌────────────────────────┐    ┌──────────────────────────────┐
+│ READY FOR JAPAN   45%  │    │ ✓ Passport                   │
+│ ███████░░░░░░░░        │    │ ◐ Japanese: JFT-Basic A2     │
+│ Next: JFT mock test    │ →  │     mock 182/250 (need 200)  │
+│────────────────────────│    │ ○ Care skills test           │
+│ Today: N5 Unit 3 ▶     │    │ ○ Care Japanese test         │
+│ Exam in 42 days        │    │ ○ Health check               │
+└────────────────────────┘    │ ○ Pre-departure training     │
+                              └──────────────────────────────┘
 ```
 
-- [ ] `user_stats` table: totalXp, currentStreak, longestStreak, lastActiveDate, hearts, heartsRefillAt, gems
-- [ ] XP: 10 per lesson + bonus for perfect, 5 per review session
-- [ ] Daily goal ring on Home header (10/20/30/50 XP options)
-- [ ] Streak: increments on first goal completion per local day; resets if a day is missed; streak freeze item
-- [ ] Hearts: 5 max, lose 1 per mistake, 1 refills every 4 h, lesson ends at 0; practice mode is free
-- [ ] Achievements table + 10 starter achievements (first lesson, 7-day streak, all hiragana, perfect lesson, …)
-- [ ] Profile screen: stats, achievements grid, calendar heatmap of activity
-- [ ] Daily reminder local notification (`flutter_local_notifications`), time chosen in settings
-- [ ] Verify: streak survives app kill, breaks correctly after a skipped day (test with fake clock)
+### 6a. Mock tests
+
+- [ ] Test content schema in `packages/schema`: sections, questions (text, audio, image), timing, scoring
+- [ ] Mock **JFT-Basic**: 4 sections (script & vocabulary, conversation & expression, listening,
+      reading), timed, score out of 250 with the pass line from content
+- [ ] Mock **JLPT N4** (after N5 content exists)
+- [ ] Result screen: total, per-section score, weakest topics → "practise these" links into lessons
+- [ ] Drift `test_attempts` table; readiness uses the best recent attempt
+- [ ] Job-field vocabulary sets (care, food service, agriculture, aviation) with practice questions
+- [ ] Verify: a full mock test can be taken offline, resumed after app kill, and scored
+
+### 6b. Japan readiness
+
+- [ ] `packages/content/requirements/*.yaml`: one file per path (SSW + field, engineer, student),
+      each item with type (`japanese_level`, `skills_test`, `document`, `training`), how it is
+      met, source URL and `checkedAt` date
+- [ ] Onboarding: pick a path and field, target departure month, exam date if booked
+- [ ] Requirements screen: checklist with status (done / in progress / not started) and what to do next
+- [ ] Items the app can measure fill in themselves (Japanese level from mock tests, training from lessons)
+- [ ] Items the student reports (documents) are ticked by the student; teacher confirmation comes in Phase 7f
+- [ ] Readiness score: weighted progress over the path's requirements; Home shows it with the next step
+- [ ] Reminders for exam dates and expiring documents
+- [ ] Verify: changing a requirement file changes the checklist without a Dart change
 
 ---
 
@@ -502,8 +541,7 @@ Done in four sub-steps, each deployable on its own.
 ### 7a. Database package (`packages/db`)
 
 - [x] Drizzle schema files, one per domain:
-  - `users (id uuid pk, email unique null, apple_sub unique null, google_sub unique null, username, avatar_key, created_at, deleted_at)`
-  - `refresh_tokens (id, user_id fk, token_hash, device_id, expires_at, revoked_at)`
+  - `users (id uuid pk, auth0_sub unique, email, email_verified, name, picture_url, created_at, updated_at, deleted_at)`. Sessions and refresh tokens live in Auth0, so there is no `refresh_tokens` table
   - `user_stats (user_id pk, total_xp, current_streak, longest_streak, last_active_date, streak_freezes, hearts, hearts_refill_at, updated_at)`
   - `lesson_progress (user_id, lesson_id, completed_at, best_accuracy, attempts, updated_at, pk(user_id, lesson_id))`
   - `item_reviews (user_id, item_id, item_type, stability, difficulty, due, last_review, reps, lapses, updated_at, pk(user_id, item_id))`
@@ -520,7 +558,7 @@ Done in four sub-steps, each deployable on its own.
 ### 7b. API skeleton (`apps/backend/user`)
 
 - [x] NestJS 12 (ESM) in `apps/backend/user`, pnpm workspace, strict TS, `@repo/*` workspace deps
-- [x] Config module with zod-validated env (base vars done; add `JWT_SECRET`, `R2_*`, `APPLE_CLIENT_ID`, `GOOGLE_CLIENT_ID`, `SENTRY_DSN` as features land)
+- [x] Config module with zod-validated env (base vars and `AUTH0_DOMAIN`, `AUTH0_AUDIENCE` done; add `R2_*`, `SENTRY_DSN` as features land)
 - [x] `DrizzleModule`: global provider wrapping `packages/db` client with connection pool
 - [x] Pino logger (`nestjs-pino`), request id, redaction of auth headers
 - [x] `GET /health` (Terminus: db ping), `GET /ready`
@@ -555,19 +593,25 @@ packages/schema (zod) ─▶ packages/contract (oRPC) ─┬─▶ apps/backend/
 - [x] Update e2e tests; guards and pipes only run over HTTP, not in `call()` unit tests
 - [x] Verify: `/v1/content/*` responses unchanged, `openapi.json` paths unchanged, e2e green
 
-### 7c. Auth
+### 7c. Auth (Auth0)
 
-- [ ] Contracts `auth.apple`, `auth.google`, `auth.refresh`, `auth.logout`, `auth.logoutAll`, `users.deleteMe` in `packages/contract`
-- [ ] `POST /auth/apple` – verify Apple identity token (`apple-signin-auth`), upsert user by `apple_sub`
-- [ ] `POST /auth/google` – verify Google ID token (`google-auth-library`), upsert user by `google_sub`
-- [ ] Issue access JWT (15 min) + opaque refresh token (30 days, hashed in `refresh_tokens`, rotated on use, per device)
-- [ ] `POST /auth/refresh`, `POST /auth/logout` (revoke device), `POST /auth/logout-all`
-- [ ] `JwtAuthGuard` + `@CurrentUser()` decorator
-- [ ] `DELETE /users/me` – soft delete + purge job after 30 days (App Store requirement)
-- [ ] Guest → account merge: `POST /auth/apple|google` accepts optional `guestSnapshot`, merged on first sign-in
-- [ ] Flutter: `sign_in_with_apple`, `google_sign_in`, secure token storage (`flutter_secure_storage`), Dio interceptor for refresh
-- [ ] Guest mode first: no account required. Prompt to create one after Unit 1 ("save your progress")
-- [ ] Verify: sign in on simulator, token refresh works after access token expiry, logout revokes
+Auth0 hosts sign-in and sessions. The API never sees passwords or social-provider tokens;
+it verifies Auth0 access tokens and keeps its own `users` row per Auth0 user.
+
+- [x] Contract `users.me` (`GET /v1/me`), marked with a bearer security scheme in openapi.json
+- [x] `AuthGuard` verifies RS256 access tokens with `jose` against `https://AUTH0_DOMAIN/.well-known/jwks.json` (issuer + audience checked); 401 problem+json with `WWW-Authenticate: Bearer`, 503 when Auth0 isn't configured
+- [x] `users` keyed by `auth0_sub`; first `GET /v1/me` creates the row, later calls refresh profile fields the token carries
+- [x] Post-Login Action adds `email`, `email_verified`, `name`, `picture` as namespaced claims (README, "Auth0 setup")
+- [x] Unit tests with a local key pair; e2e tests sign real tokens against the test database
+- [x] Flutter: `auth0_flutter` with Google, Facebook, Apple (iOS only) and email buttons on Profile; credentials stored and refreshed by its credentials manager; guest mode when not configured
+- [ ] Create the Auth0 tenant, API, native app and social connections (README, "Auth0 setup")
+- [ ] Production social apps: Google OAuth client, Meta app + app review, Apple Services ID + key
+- [ ] Mobile API client sends `Authorization: Bearer` from `credentialsManager.credentials()` (lands with sync, 7d)
+- [ ] `DELETE /v1/me` – soft delete + delete the Auth0 user via the Management API; purge job after 30 days (App Store requirement)
+- [ ] Guest → account merge: first sync after sign-in uploads the guest's local progress
+- [ ] Prompt to sign in after Unit 1 ("save your progress")
+- [ ] Rate limiting (`@nestjs/throttler`) on signed-in routes
+- [ ] Verify on devices: each provider signs in, token refresh after expiry, sign-out clears the session
 
 ### 7d. Sync
 
@@ -595,6 +639,16 @@ packages/schema (zod) ─▶ packages/contract (oRPC) ─┬─▶ apps/backend/
 - [ ] Backups: confirm Neon PITR enabled; test a restore once and write down the steps
 - [ ] Verify: prod `/health` green, Flutter prod flavor syncs against it
 
+### 7f. Classes for the pilot school
+
+- [ ] `organizations`, `org_members (role: owner | teacher | student)`, `classes`, `class_members` tables
+- [ ] Join a class with a code or QR in the app
+- [ ] Teacher web view (in `apps/admin` with an org-scoped role): roster, lessons done, mock test
+      scores, readiness per student, weak topics for the class
+- [ ] Teachers confirm requirement items (exam passed, documents checked); confirmed items show a badge
+- [ ] Homework: assign lessons or a mock test with a due date
+- [ ] Verify: a teacher sees a student's mock score and readiness within a minute of a sync
+
 ---
 
 ## 10. Phase 8 – Audio
@@ -607,15 +661,19 @@ packages/schema (zod) ─▶ packages/contract (oRPC) ─┬─▶ apps/backend/
 
 ---
 
-## 11. Phase 9 – Polish & instrumentation
+## 11. Phase 9 – Polish, motivators & instrumentation
 
-- [ ] Onboarding flow: why learning, daily goal pick, notification permission, optional sign-in
-- [ ] Animations: path node pop, XP count-up, streak flame, heart loss shake
+Motivators support the course; they are not the product.
+
+- [ ] Daily goal + streak (with a fake-clock test), XP for lessons and tests
+- [ ] Daily reminder notification; exam-date and document reminders from Phase 6b
+- [ ] Onboarding flow: path + field, daily goal, notification permission, optional sign-in, class code
+- [ ] Animations: path node pop, XP count-up, readiness score fill
 - [ ] Haptics on answer
 - [ ] Empty states, error states, offline banner
 - [ ] Accessibility: semantics labels, font scaling, reduce-motion respected
 - [ ] Review all Mongolian and English strings with a native speaker / teacher (localisation itself starts in Phase 2)
-- [ ] Analytics: PostHog (self-host or cloud), events: lesson_start, lesson_complete, exercise_answer, streak_lost
+- [ ] Analytics: PostHog (self-host or cloud), events: lesson_start, lesson_complete, exercise_answer, test_complete, requirement_done
 - [ ] Crash reporting: Sentry
 - [ ] Performance pass: 60 fps on a mid-range Android device, cold start < 2 s
 - [ ] Privacy policy + terms page (required by both stores)
@@ -634,22 +692,44 @@ packages/schema (zod) ─▶ packages/contract (oRPC) ─┬─▶ apps/backend/
 
 ---
 
-## 13. Post-MVP roadmap (pick in order of user feedback)
+## 13. Post-MVP roadmap (pick in order of pilot feedback)
 
-- [ ] Vocab & grammar units (N5): `WordBank` sentence builder, `FillParticle`, `Translate`
-- [ ] Kanji track: `KanjiReading`, `KanjiMeaning`, tracing with stroke-order enforcement
-- [ ] Speaking exercises (`speech_to_text`, ja-JP)
-- [ ] Furigana toggle per-item based on SRS mastery
-- [ ] Leagues: weekly cohorts of 30, `leagues` + `league_members` tables, cron rollover job, WebSocket gateway (`@nestjs/websockets`) for live leaderboard
-- [ ] Friends & friend streaks
-- [ ] Stories (short dialogues with comprehension questions)
-- [ ] Timed Blitz mode for kana/vocab
-- [ ] Counters & numbers mini-game
-- [ ] Monetisation: Super tier (unlimited hearts, no ads, offline packs) via RevenueCat
-- [ ] **Schools (B2B): organisations, classes, teacher dashboard – see breakdown below. Likely the first thing customers pay for**
+**Learning**
+
+- [ ] N4 course and mock JLPT N4; grammar exercises (`WordBank`, `FillParticle`, `Translate`)
+- [ ] Kanji track with tracing and stroke-order checking
+- [ ] Speaking practice (`speech_to_text`, ja-JP) and AI role-play for interviews and the JFT conversation section
+- [ ] Furigana toggle per item based on SRS mastery
+- [ ] Short stories and dialogues set in Japanese workplaces
+
+**School tools**
+
+- [ ] QR attendance per lesson, absence flags
+- [ ] Progress reports (PDF / CSV, in Mongolian) for schools and sponsors
+- [ ] Seat-based licensing per organisation
+
+**Stage 2 – Get hired**
+
+- [ ] Verified candidate profile: Japanese level, readiness, attendance, recorded interview answers
+- [ ] Employer view and interview scheduling (with the sending organisation)
+
+**Stage 3 – Prepare to leave**
+
+- [ ] Pre-departure training course: workplace manners, life rules (garbage, trains, city hall), visa steps
+- [ ] Completion records the organisation can show
+
+**Stage 4 – Arrive and live in Japan**
+
+- [ ] Arrival checklist: residence card, address registration, housing, SIM, bank account
+- [ ] Support chat in Mongolian; regular check-ins for registered-support duties
+- [ ] Keep learning: job Japanese, path toward 特定技能2号
+
+**Platform**
+
+- [ ] Other source languages (Vietnamese, Nepali, Indonesian, Myanmar) using the same content pipeline
 - [ ] Admin panel (`apps/admin`, Next.js) – see breakdown below
 - [ ] Machine learning (`apps/ml`, Python) – see breakdown below
-- [ ] Course tracks: JFT-Basic mock tests, JLPT N4, workplace Japanese per job field (nursing care, food service, construction…), daily life in Japan
+- [ ] Extra game features if pilot data shows they help: hearts, leagues, friends, Blitz mode
 - [ ] Move cron jobs to BullMQ + Redis when they need retries/visibility; move audio generation there too
 - [ ] Read replicas / connection pooling (PgBouncer or Neon pooler) when sync traffic grows
 
@@ -667,15 +747,15 @@ apps/admin (Next.js)  ──HTTPS + admin JWT──▶  apps/backend/admin /v1/a
 
 - [ ] `role` enum on `users` (`user`, `support`, `admin`) + migration
 - [ ] `RolesGuard` + `@Roles('admin')` decorator in backend; all admin routes under `/v1/admin`
-- [ ] Admin sign-in (Google workspace account or email magic link), separate from the app's Apple/Google flow
+- [ ] Admin sign-in through Auth0 with an admin role, separate from student accounts
 - [ ] `admin_audit_log (id, admin_id, action, target_user_id, payload jsonb, created_at)` – every admin write is logged
 - [ ] Scaffold `apps/admin` with Next.js + typed oRPC client (`@orpc/client`) importing `packages/contract`; admin procedures live under `admin.*`
 
 **User management**
 
 - [ ] User list: search by email / username / id, filter by created date, last active, streak
-- [ ] User detail: profile, stats, streak history, lesson progress, devices (refresh tokens), sync log
-- [ ] Actions: suspend / unsuspend, revoke all sessions, restore a lost streak, grant gems / streak freezes, delete account (with confirm)
+- [ ] User detail: profile, stats, lesson progress, test scores, readiness, sync log
+- [ ] Actions: suspend / unsuspend, block sign-in in Auth0, delete account (with confirm)
 - [ ] Support notes on a user (visible to support + admin)
 
 **Content management**
@@ -685,21 +765,13 @@ apps/admin (Next.js)  ──HTTPS + admin JWT──▶  apps/backend/admin /v1/a
 
 **Insights**
 
-- [ ] Dashboard: DAU / WAU, signups, lesson completions, streak distribution, retention (D1 / D7 / D30)
+- [ ] Dashboard: DAU / WAU, signups, lesson completions, mock test scores, readiness distribution, retention (D1 / D7 / D30)
 - [ ] Hardest items: exercises with the highest error rate, to fix content
 
 ### Schools (B2B)
 
-Schools and agencies buy seats for their students and want to see progress. Built on the same
-backend and the admin web app.
-
-- [ ] `organizations`, `org_members (role: owner | teacher | student)`, `classes`, `class_members` tables
-- [ ] Join a class with an invite code or QR in the mobile app
-- [ ] Teacher view (web, in `apps/admin` with an org-scoped role): class roster, streaks, lessons done, weak items per student
-- [ ] Assign homework: a set of lessons / review targets with a due date
-- [ ] Progress report export (PDF / CSV) per student and per class, in Mongolian
-- [ ] Seat-based licensing: org buys N seats for a period; students in a class get premium features
-- [ ] Mock-test mode with JFT-Basic-style sections and a score report
+Classes, teacher view and homework are in the MVP (Phase 7f). Attendance, reports and
+licensing are on the roadmap above.
 
 ### Machine learning (post-MVP, `apps/ml`)
 
@@ -733,6 +805,7 @@ Skip until there are many users: custom recommendation engines, training own lan
 - Every exercise type gets a widget test with a fake controller.
 - Content changes never require Dart changes. If they do, the schema is wrong.
 - Keep the app usable with zero network until Phase 7, and after Phase 7 too.
+- Requirement rules live in content files with a source and `checkedAt` date, never in code.
 - Every API change starts in `packages/contract` (oRPC, with zod from `packages/schema`); regenerate the Dart client, never hand-edit it.
 - Backend layers: controller (oRPC contract) → service (business rules, never touches the DB) → repository (`*.repository.ts`, the only code that imports Drizzle). Enforced by ESLint.
 - Migrations are forward-only and reviewed; no `drizzle-kit push` against prod.

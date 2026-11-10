@@ -3,27 +3,31 @@
   "version": "0.0.0",
   "private": true,
   "description": "User-facing NestJS API for the mobile app: auth, sync, content, jobs",
-  "type": "module",
   "scripts": {
+    "build": "nest build",
     "dev": "nest start --watch --exec \"node --env-file-if-exists=../../../.env\"",
-    "build": "tsc -p tsconfig.json",
-    "start": "node --env-file-if-exists=../../../.env dist/main.js",
+    "start": "node --env-file-if-exists=../../../.env dist/main",
+    "start:prod": "node dist/main",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^12.2.0",
+    "@nestjs/config": "^12.0.1",
     "@nestjs/core": "^12.2.0",
-    "@nestjs/platform-express": "^12.2.0",
+    "@nestjs/platform-fastify": "^12.2.0",
     "@nestjs/terminus": "^12.1.0",
     "@orpc/nest": "^1.16.1",
     "@orpc/server": "^1.16.1",
     "@repo/contract": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/schema": "workspace:*",
-    "drizzle-orm": "^0.45.4",
+    "fastify": "^5.12.7",
+    "jose": "6.2.13",
     "nestjs-pino": "^5.3.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
@@ -37,15 +41,54 @@
     "@nestjs/testing": "^12.2.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/tsconfig": "workspace:*",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.16.20",
-    "@types/express": "^5.0.6",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
     "@types/supertest": "^7.2.1",
     "eslint": "^10.13.0",
+    "jest": "^30.5.2",
     "pino-pretty": "^13.2.0",
     "supertest": "^7.3.1",
-    "typescript": "~6.0.3",
-    "unplugin-swc": "^2.0.0",
-    "vitest": "^5.0.5"
+    "typescript": "~6.0.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "mjs",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.(t|m?j)s$": [
+        "@swc/jest",
+        {
+          "jsc": {
+            "target": "es2023",
+            "parser": {
+              "syntax": "typescript",
+              "decorators": true
+            },
+            "transform": {
+              "legacyDecorator": true,
+              "decoratorMetadata": true
+            },
+            "keepClassNames": true
+          },
+          "module": {
+            "type": "commonjs"
+          }
+        }
+      ]
+    },
+    "transformIgnorePatterns": [],
+    "moduleNameMapper": {
+      "^@/test/(.*)$": "<rootDir>/../test/$1",
+      "^@/(.*)$": "<rootDir>/$1"
+    }
   }
 }

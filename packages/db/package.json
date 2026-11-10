@@ -10,16 +10,20 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "default": "./dist/schema/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "pnpm build && node --env-file-if-exists=../../.env dist/migrate.js",
-    "db:seed": "pnpm build && node --env-file-if-exists=../../.env dist/seed.js",
+    "db:migrate": "pnpm build && node --env-file-if-exists=../../.env dist/bin/migrate.js",
+    "db:seed": "pnpm build && node --env-file-if-exists=../../.env dist/bin/seed.js",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check"
   },
@@ -29,6 +33,7 @@
     "@types/node": "^26.6.5",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.13.0",
+    "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   },

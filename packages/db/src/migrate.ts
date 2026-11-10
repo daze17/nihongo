@@ -1,8 +1,10 @@
-import { fileURLToPath } from 'node:url';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import { createDb } from './client.js';
+import { fileURLToPath } from "node:url";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { createDb } from "./client";
 
-const migrationsFolder = fileURLToPath(new URL('../migrations', import.meta.url));
+const migrationsFolder = fileURLToPath(
+  new URL("../migrations", import.meta.url),
+);
 
 /** Applies pending migrations. Used by `pnpm db:migrate`, tests and the deploy release step. */
 export async function runMigrations(databaseUrl: string) {
@@ -12,11 +14,4 @@ export async function runMigrations(databaseUrl: string) {
   } finally {
     await close();
   }
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error('DATABASE_URL is not set');
-  await runMigrations(url);
-  console.log('migrations applied');
 }

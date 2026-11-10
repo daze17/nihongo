@@ -105,30 +105,17 @@ CREATE TABLE "user_stats" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "refresh_tokens" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"token_hash" text NOT NULL,
-	"device_id" text NOT NULL,
-	"expires_at" timestamp with time zone NOT NULL,
-	"revoked_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "refresh_tokens_token_hash_unique" UNIQUE("token_hash")
-);
---> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"auth0_sub" text NOT NULL,
 	"email" text,
-	"apple_sub" text,
-	"google_sub" text,
-	"username" text,
-	"avatar_key" text,
+	"email_verified" boolean DEFAULT false NOT NULL,
+	"name" text,
+	"picture_url" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
-	CONSTRAINT "users_email_unique" UNIQUE("email"),
-	CONSTRAINT "users_apple_sub_unique" UNIQUE("apple_sub"),
-	CONSTRAINT "users_google_sub_unique" UNIQUE("google_sub")
+	CONSTRAINT "users_auth0_sub_unique" UNIQUE("auth0_sub")
 );
 --> statement-breakpoint
 ALTER TABLE "achievements_unlocked" ADD CONSTRAINT "achievements_unlocked_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -136,8 +123,6 @@ ALTER TABLE "item_reviews" ADD CONSTRAINT "item_reviews_user_id_users_id_fk" FOR
 ALTER TABLE "lesson_progress" ADD CONSTRAINT "lesson_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sync_log" ADD CONSTRAINT "sync_log_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_stats" ADD CONSTRAINT "user_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "item_reviews_user_due_idx" ON "item_reviews" USING btree ("user_id","due");--> statement-breakpoint
 CREATE INDEX "item_reviews_user_updated_idx" ON "item_reviews" USING btree ("user_id","updated_at");--> statement-breakpoint
-CREATE INDEX "lesson_progress_user_updated_idx" ON "lesson_progress" USING btree ("user_id","updated_at");--> statement-breakpoint
-CREATE INDEX "refresh_tokens_user_device_idx" ON "refresh_tokens" USING btree ("user_id","device_id");
+CREATE INDEX "lesson_progress_user_updated_idx" ON "lesson_progress" USING btree ("user_id","updated_at");

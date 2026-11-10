@@ -1,1 +1,1 @@
-export * from './hiragana.js';
+export * from "./hiragana";

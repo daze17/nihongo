@@ -1,8 +1,21 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Values passed with --dart-define / --dart-define-from-file, so Auth0 is configured once.
+val dartDefines: Map<String, String> =
+    (project.findProperty("dart-defines") as String?)
+        ?.split(",")
+        ?.map { String(Base64.getDecoder().decode(it)) }
+        ?.mapNotNull { entry ->
+            entry.split("=", limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] }
+        }
+        ?.toMap()
+        ?: emptyMap()
 
 android {
     namespace = "com.bilguun.nihongo"
@@ -27,6 +40,12 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // auth0_flutter's login callback: com.bilguun.nihongo://<domain>/android/com.bilguun.nihongo/callback
+        manifestPlaceholders +=
+            mapOf(
+                "auth0Domain" to (dartDefines["AUTH0_DOMAIN"] ?: "auth0-not-configured.invalid"),
+                "auth0Scheme" to "com.bilguun.nihongo",
+            )
     }
 
     buildTypes {

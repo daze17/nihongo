@@ -1,3 +1,4 @@
-export * from './content.js';
-export * from './contract.js';
-export * from './openapi.js';
+export * from "@/contracts";
+export * from "@/models";
+export * from "@/openapi";
+export * from "@/schemas/dtos";

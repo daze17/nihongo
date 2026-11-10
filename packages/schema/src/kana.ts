@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const KanaScript = z.enum(['hiragana', 'katakana']);
+export const KanaScript = z.enum(["hiragana", "katakana"]);
 export type KanaScript = z.infer<typeof KanaScript>;
 
 /** A single kana character, e.g. あ / a. */

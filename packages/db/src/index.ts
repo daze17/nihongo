@@ -1,5 +1,7 @@
-export * from './client.js';
-export * from './migrate.js';
-export * as schema from './schema/index.js';
-export * from './schema/index.js';
-export * from './seed.js';
+export * from "./client";
+export * from "./migrate";
+export * as schema from "./schema/index";
+export * from "./schema/index";
+export * from "./seed";
+// Query operators re-exported so apps use the same drizzle-orm instance as the schema.
+export * from "drizzle-orm";

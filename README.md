@@ -85,8 +85,53 @@ Every error, from oRPC or Nest, comes back as `application/problem+json`.
 | `GET /health`              | Readiness, pings Postgres                          |
 | `GET /v1/content/manifest` | Content version and counts                         |
 | `GET /v1/content/kana`     | Kana rows from Postgres                            |
+| `GET /v1/me`               | Signed-in user, created on first call (Auth0)      |
 | `GET /openapi.json`        | OpenAPI spec generated from the contract, dev only |
 | `GET /docs`                | Scalar API reference, dev only                     |
+
+## Auth0 setup
+
+Sign-in (Google, Facebook, Apple, email) runs on Auth0. The API only checks Auth0 access
+tokens (`apps/backend/user/src/auth`) and creates a `users` row on the first `GET /v1/me`.
+Without Auth0 settings the app stays in guest mode and `/v1/me` answers 503.
+
+1. Create an Auth0 tenant. The Japan region is closest to Mongolia.
+2. **APIs → Create API**: identifier `https://api.nihongo.app`, signing RS256. Turn on
+   **Allow Offline Access** so the app gets refresh tokens.
+3. **Applications → Create Application → Native**, then set both lists below. Replace
+   `DOMAIN` with your tenant domain. Turn on refresh token rotation.
+   - Allowed Callback URLs and Allowed Logout URLs:
+     ```
+     com.bilguun.nihongo://DOMAIN/ios/com.bilguun.nihongo/callback,
+     com.bilguun.nihongo://DOMAIN/android/com.bilguun.nihongo/callback
+     ```
+4. **Authentication → Social**: add Google, Facebook and Apple, and enable each for the
+   native app. Auth0's built-in Google keys only work for testing. Production needs your own
+   Google OAuth client, a Meta app (public Facebook login needs Meta's app review), and an
+   Apple Services ID with a Sign in with Apple key. Email sign-in uses the default database
+   connection or Passwordless email.
+5. **Actions → Library → Create Action (Post Login)**, deploy it, and add it to the Login flow.
+   Access tokens only carry the user id by default; this adds the profile the API stores:
+
+   ```js
+   exports.onExecutePostLogin = async (event, api) => {
+     const ns = "https://nihongo.app/";
+     const u = event.user;
+     if (u.email) {
+       api.accessToken.setCustomClaim(ns + "email", u.email);
+       api.accessToken.setCustomClaim(
+         ns + "email_verified",
+         Boolean(u.email_verified),
+       );
+     }
+     if (u.name) api.accessToken.setCustomClaim(ns + "name", u.name);
+     if (u.picture) api.accessToken.setCustomClaim(ns + "picture", u.picture);
+   };
+   ```
+
+6. Backend: set `AUTH0_DOMAIN` and `AUTH0_AUDIENCE` in `.env`.
+7. Mobile: copy `apps/mobile/config/dev.example.json` to `apps/mobile/config/dev.json` and fill
+   it in. `pnpm dev` passes it to `flutter run`. Android reads the same file for its callback.
 
 ## User API in Docker
 
